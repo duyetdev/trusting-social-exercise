@@ -136,6 +136,8 @@ Modify the `--master` option with your Spark IP (either in single-executor mode 
 See example at `run_submit.sh`
 
 ![](.screenshot/1.png)
+
+Input and output:
 ![](.screenshot/2.png)
 
 ## Run test
