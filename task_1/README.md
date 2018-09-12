@@ -102,7 +102,7 @@ Assuming that:
 - The `$SPARK_HOME` environment variable points to your local Spark installation folder.
 - You install spark in local.
 
-From this folder, build dependencies (zip all python file) and submit to Spark:
+From this folder, build dependencies (zip all python files: `zip -r dependencies.zip *`) and submit to Spark:
 
 ```sh
 $SPARK_HOME/bin/spark-submit \
@@ -112,7 +112,6 @@ $SPARK_HOME/bin/spark-submit \
     spark_job.py --format csv \
                  --path tests/test_data/data1_test.csv \
                  --output data1_output.csv
-
 ```
 
 ```
