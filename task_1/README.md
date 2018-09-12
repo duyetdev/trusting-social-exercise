@@ -73,11 +73,10 @@ Assumming that you have data input DataFrame
 
 ```
 .
-├── build_dependencies.sh
-├── run_submit.sh
-├── README.md
-├── spark_job_config.json
 ├── spark_job.py
+├── spark_job_config.json
+├── README.md
+├── run_submit.sh
 ├── tests
 │   ├── __init__.py
 │   ├── test_data
