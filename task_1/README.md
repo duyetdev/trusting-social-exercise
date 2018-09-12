@@ -2,7 +2,7 @@
 
 *LE Van-Duyet (me@duyet.net)*
 
-## Trategy and algorithm 
+## Strategy and algorithm 
 
 Assumming that you have data input DataFrame
 
