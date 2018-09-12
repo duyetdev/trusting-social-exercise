@@ -21,11 +21,12 @@ where dependencies.zip contains Python modules required by Spark job.
 import argparse
 import sys
 from os import listdir, path
+import json
 
 from pyspark import SparkFiles
 from pyspark.sql import Row, SparkSession
 from pyspark.sql.functions import *
-from pyspark.sql.functions import col, lag, rank
+from pyspark.sql.functions import col, lag, rank, row_number
 from pyspark.sql.types import DateType, StringType, StructField, StructType
 from pyspark.sql.window import Window
 from utils import logger
@@ -39,13 +40,13 @@ def main():
     """
 
     # Get args for spark job
-    parser = argparse.ArgumentParser(description='Find activation date')
+    parser = argparse.ArgumentParser(description='Find real activation date')
     parser.add_argument('--format', default='csv',
                         help='format of input file: csv or parquet')
     parser.add_argument('--path', help='path of input data set '
-                                       '(e.g. local://data.csv)')
+                                       '(e.g. file:///home/duyetdev/data.csv, hdfs:///data.csv)')
     parser.add_argument('--output', help='path of input data set '
-                                         '(e.g. local://output.csv)')
+                                         '(e.g. file:///home/duyetdev/output.csv, hdfs:///output.csv)')
     parser.add_argument(
         '--debug', help='turn on debug mode', action='store_true')
     args = parser.parse_args()
@@ -64,6 +65,7 @@ def main():
     spark = get_spark()
     log = get_logger()
     config = get_spark_config()
+    log.warn(config)
 
     # log that main ETL job is starting
     log.warn('spark_job is up !!')
@@ -76,13 +78,15 @@ def main():
     if DEBUG:
         data.show()
 
-    data_output = process_data(spark, data)
+    data_output = process_data(
+        spark, data, drop_duplicated=config.get('drop_duplicated_output'))
     if DEBUG:
         data_output.show()
 
     if args.output:
         log.warn('Write output to %s' % args.output)
-        write_data(spark, data_output)
+        write_data(data_output, OUTPUT_PATH,
+                   format=INPUT_FORMAT, mode='overwrite')
     else:
         data_output.show()
 
@@ -133,17 +137,16 @@ def get_spark_config():
                     if filename.endswith('.json')]
 
     if len(config_files) != 0:
-        path_to_config_file = os.path.join(spark_files_dir, config_files[0])
+        path_to_config_file = path.join(spark_files_dir, config_files[0])
         with open(path_to_config_file, 'r') as config_file:
             config_json = config_file.read().replace('\n', '')
-        config_dict = loads(config_json)
-        spark_logger.warn('loaded config from ' + config_files[0])
+        config_dict = json.loads(config_json)
     else:
         config_dict = {}
     return config_dict
 
 
-def load_data(spark=None, input_path=None, format='csv'):
+def load_data(spark=None, input_path=None, format='csv', auto_schema=False):
     """Load data from CSV or parquet file
 
     :param spark: Spark session object.
@@ -153,20 +156,23 @@ def load_data(spark=None, input_path=None, format='csv'):
     """
     assert format in ['csv', 'parquet'], 'Format should be "csv" or "parquet"'
 
-    schema = StructType([
-        StructField('PHONE_NUMBER', StringType(), False),
-        StructField('ACTIVATION_DATE', DateType(), False),
-        StructField('DEACTIVATION_DATE', DateType(), True)
-    ])
+    reader = spark.read.option("header", "true")
 
-    reader = spark.read.option("header", "true").schema(schema)
+    if not auto_schema:
+        schema = StructType([
+            StructField('PHONE_NUMBER', StringType(), False),
+            StructField('ACTIVATION_DATE', DateType(), False),
+            StructField('DEACTIVATION_DATE', DateType(), True)
+        ])
+        reader = reader.schema(schema)
+
     df = reader.parquet(
         input_path) if format == 'parquet' else reader.csv(input_path)
 
     return df
 
 
-def process_data(spark, df):
+def process_data(spark, df, drop_duplicated=False):
     """Process data
 
     :param spark: Spark session object.
@@ -179,19 +185,18 @@ def process_data(spark, df):
         col('ACTIVATION_DATE').desc())
 
     # Check if the activation_date == deactive_date of previous record?
-    df2 = df.withColumn('row_number', row_number().over(w1)) \
-            .withColumn('is_first_of_current_user', col('ACTIVATION_DATE') !=
-                        lag('DEACTIVATION_DATE').over(w1)) \
-            .fillna({'is_first_of_current_user': True})
+    df2 = df.withColumn('is_first_of_current_user', col('ACTIVATION_DATE') !=
+                        lag('DEACTIVATION_DATE').over(w1)).fillna({'is_first_of_current_user': True})
 
     # Get the latest user, first row of this one
     df3 = df2.where('is_first_of_current_user == True') \
              .withColumn('rank', rank().over(w2))
 
     # Select latest user
-    df3 = df3.filter('rank == 1').select('PHONE_NUMBER', 'ACTIVATION_DATE')
+    df3 = df3.filter('rank == 1').select(col('PHONE_NUMBER'),
+                                         col('ACTIVATION_DATE').alias('REAL_ACTIVATION_DATE'))
 
-    return df3
+    return df3.drop_duplicates() if drop_duplicated else df3
 
 
 def write_data(df, path, format='csv', mode='overwrite', coalesce=1):
