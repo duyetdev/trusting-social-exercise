@@ -1,12 +1,3 @@
-<!-- TOC -->
-
-- [Task 1 [Algorithm and coding]: Find the actual activation date of a phone number](#task-1-algorithm-and-coding-find-the-actual-activation-date-of-a-phone-number)
-- [Project structure](#project-structure)
-- [Submit the job](#submit-the-job)
-- [Run test](#run-test)
-
-<!-- /TOC -->
-
 ## Task 1 [Algorithm and coding]: Find the actual activation date of a phone number
 
 Assumming that you have data input DataFrame
