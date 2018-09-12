@@ -44,9 +44,9 @@ def main():
     parser.add_argument('--format', default='csv',
                         help='format of input file: csv or parquet')
     parser.add_argument('--path', help='path of input data set '
-                                       '(e.g. local://data.csv)')
+                                       '(e.g. file:///home/duyetdev/data.csv, hdfs:///data.csv)')
     parser.add_argument('--output', help='path of input data set '
-                                         '(e.g. local://output.csv)')
+                                         '(e.g. file:///home/duyetdev/output.csv, hdfs:///output.csv)')
     parser.add_argument(
         '--debug', help='turn on debug mode', action='store_true')
     args = parser.parse_args()
@@ -65,6 +65,7 @@ def main():
     spark = get_spark()
     log = get_logger()
     config = get_spark_config()
+    log.warn(config)
 
     # log that main ETL job is starting
     log.warn('spark_job is up !!')

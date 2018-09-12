@@ -1,4 +1,8 @@
-## Task 1 [Algorithm and coding]: Find the actual activation date of a phone number
+# Task 1 [Algorithm and coding]: Find the actual activation date of a phone number
+
+*LE Van-Duyet (me@duyet.net)*
+
+## Trategy and algorithm 
 
 Assumming that you have data input DataFrame
 
@@ -121,17 +125,22 @@ Find real activation date
 optional arguments:
   -h, --help       show this help message and exit
   --format FORMAT  format of input file: csv or parquet
-  --path PATH      path of input data set (e.g. local://data.csv)
-  --output OUTPUT  path of input data set (e.g. local://output.csv)
+  --path PATH      path of input data set (e.g.
+                   file:///home/duyetdev/data.csv, hdfs:///data.csv)
+  --output OUTPUT  path of input data set (e.g.
+                   file:///home/duyetdev/output.csv, hdfs:///output.csv)
   --debug          turn on debug mode
 ```
 
 Modify the `--master` option with your Spark IP (either in single-executor mode locally or something larger in the cloud) - e.g. `--master spark://localhost:7077`
 
-See example at `sub_submit.sh`
+See example at `run_submit.sh`
+
+![](.screenshot/1.png)
+![](.screenshot/2.png)
 
 ## Run test
-Only test the `process_data` function due to lack of time. Append task_1 folder to your `PYTHONPATH`, make sure you have installed `pyspark`, `py4j` and `pytest` packages.
+Only test the `process_data` function due to lack of time. Append `task_1` folder to your `PYTHONPATH`, make sure you have installed `pyspark`, `py4j` and `pytest` packages.
 
 Then, execute following commands in root directory:
 ```
